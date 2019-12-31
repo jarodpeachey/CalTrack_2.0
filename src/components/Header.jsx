@@ -6,6 +6,7 @@ import { Link, withRouter } from 'react-router-dom';
 import { withStyles, MenuItem, Menu } from '@material-ui/core';
 import Person from '@material-ui/icons/Person';
 import { connect } from 'react-redux';
+import axios from 'axios';
 import { removeUser } from '../actions/userActions';
 
 class Header extends Component {
@@ -14,6 +15,7 @@ class Header extends Component {
     pathname: PropTypes.string,
     history: PropTypes.object,
     showFooterBar: PropTypes.bool,
+    removeUser: PropTypes.func,
   };
 
   constructor (props) {
@@ -57,7 +59,34 @@ class Header extends Component {
   }
 
   deleteAccount () {
-    window.location.href = '/signup';
+    axios({
+      method: 'DELETE',
+      url: `${this.props.apiURL}/users/${this.props.user.userID}`,
+    })
+      .then((res) => {
+        console.log('Sent! Response: ', res);
+        if (res.data.success) {
+          this.setState({
+            mainMessageType: 'success',
+            mainMessage:
+              'Success!',
+          });
+
+          this.props.removeUser();
+
+          setTimeout(() => {
+            this.props.history.push('/signup');
+          }, 1000);
+        } else {
+          this.setState({
+            mainMessageType: 'error',
+            mainMessage: 'Your email/password is incorrect.',
+          });
+        }
+      })
+      .catch((err) => {
+        console.log('Error: ', err);
+      });
   }
 
   render () {
@@ -272,7 +301,6 @@ const IconContainer = styled.div`
   }
 `;
 
-export default connect(
-  null,
-  { removeUser },
-)(withRouter(withStyles(styles)(Header)));
+export default connect(null, { removeUser })(
+  withRouter(withStyles(styles)(Header)),
+);
